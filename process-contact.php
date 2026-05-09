@@ -21,7 +21,7 @@ function validateContactForm($name, $email, $message)
     return $errors;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if (($_SERVER["REQUEST_METHOD"] ?? '') === "POST") {
     $name = $_POST["name"] ?? '';
     $email = $_POST["email"] ?? '';
     $message = $_POST["message"] ?? '';

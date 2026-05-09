@@ -31,14 +31,20 @@ jobs:
           php -l thank-you.php
           php -l tests/ContactFormTest.php
 
-      - name: Validate Commit Message
+      - name: Validate Jira ID
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-          if [[ ! "$COMMIT_MSG" =~ SPMS-[0-9]+ ]]; then
-            echo "Commit message must contain Jira ticket ID like SPMS-2"
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TEXT="${{ github.event.pull_request.title }}"
+            echo "PR title: $TEXT"
+            else
+                TEXT=$(git log -1 --pretty=%B)
+                echo "Commit message: $TEXT"
+            fi
+
+            if [[ ! "$TEXT" =~ SPMS-[0-9]+ ]]; then
+            echo "PR title or commit message must contain Jira ticket ID like SPMS-2"
             exit 1
-          fi
+            fi
 
   automated-tests:
     name: Automated Contact Form Tests
