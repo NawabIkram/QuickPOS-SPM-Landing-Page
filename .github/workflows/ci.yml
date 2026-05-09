@@ -1,0 +1,83 @@
+name: QuickPOS CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - "feature/**"
+      - "bugfix/**"
+
+jobs:
+  code-quality:
+    name: Code Quality and Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+
+      - name: PHP Syntax Check
+        run: |
+          php -l index.php
+          php -l process-contact.php
+          php -l thank-you.php
+          php -l tests/ContactFormTest.php
+
+      - name: Validate Jira ID
+        run: |
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TEXT="${{ github.event.pull_request.title }}"
+            echo "PR title: $TEXT"
+            else
+                TEXT=$(git log -1 --pretty=%B)
+                echo "Commit message: $TEXT"
+            fi
+
+            if [[ ! "$TEXT" =~ SPMS-[0-9]+ ]]; then
+            echo "PR title or commit message must contain Jira ticket ID like SPMS-2"
+            exit 1
+            fi
+
+  automated-tests:
+    name: Automated Contact Form Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+
+      - name: Run Automated Tests
+        run: php tests/ContactFormTest.php
+
+  artifact-upload:
+    name: Upload Build Artifact
+    runs-on: ubuntu-latest
+    needs: [code-quality, automated-tests]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Upload Project Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickpos-build-files
+          path: |
+            index.php
+            process-contact.php
+            thank-you.php
+            assets/
+            tests/
