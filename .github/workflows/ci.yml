@@ -37,6 +37,7 @@ jobs:
           php -l tests/PageLoadTest.php
 
       - name: Validate Jira ID
+        shell: bash
         run: |
             if [ "${{ github.event_name }}" = "pull_request" ]; then
             TEXT="${{ github.event.pull_request.title }}"
